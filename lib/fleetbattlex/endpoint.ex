@@ -35,5 +35,7 @@ defmodule Fleetbattlex.Endpoint do
     key: "_fleetbattlex_key",
     signing_salt: "/LMNT8eQ"
 
+  socket "/socket", Fleetbattlex.UserSocket
+
   plug Fleetbattlex.Router
 end

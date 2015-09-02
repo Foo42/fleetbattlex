@@ -19,4 +19,12 @@ defmodule Fleetbattlex.PhysicsTest do
     expected_final_velocity = {1,2}
     assert Physics.apply_accelleration(original_velocity, accelleration, elapsed_time) == expected_final_velocity
   end
+
+  test "gravitational field" do
+    a = %{mass: 1, position: {0,0}}
+    b = %{mass: 1, position: {0,3}}
+
+    gravitational_force = Physics.calculate_gravitational_field a, b
+    assert {0,0} = gravitational_force
+  end
 end
