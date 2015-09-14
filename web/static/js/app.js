@@ -71,11 +71,13 @@ function drawGrid(viewport, context) {
 
 	var gridFrequency = 20;
 
-	calculateDivisions(gridFrequency, viewport.centre.x - viewport.size.width / 2, viewport.centre.x + viewport.size.width / 2).forEach(function (position) {
+	var width = viewport.size.width / viewport.scale;
+	var height = viewport.size.height / viewport.scale;
+	calculateDivisions(gridFrequency, viewport.centre.x - width / 2, viewport.centre.x + width / 2).forEach(function (position) {
 		drawVerticalGridLine(viewport, position, viewport.size.height, context);
 	});
 
-	calculateDivisions(gridFrequency, viewport.centre.y - viewport.size.height / 2, viewport.centre.y + viewport.size.height / 2).forEach(function (position) {
+	calculateDivisions(gridFrequency, viewport.centre.y - height / 2, viewport.centre.y + height / 2).forEach(function (position) {
 		drawHorizontalGridLine(viewport, position, viewport.size.width, context);
 	});
 
@@ -84,16 +86,11 @@ function drawGrid(viewport, context) {
 		y: 0
 	}, 10, 'red');
 
-	drawMarker({
-		x: -50,
-		y: 0
-	}, 5, 'blue');
-
 	context.restore();
 }
 
 function updateHud(viewport) {
-	document.getElementById('viewport-debug').textContent = `${viewport.centre.x},${viewport.centre.y}`;
+	document.getElementById('viewport-debug').textContent = `${viewport.centre.x},${viewport.centre.y} (${viewport.scale}x)`;
 }
 
 function clear(viewport, context) {
@@ -121,7 +118,36 @@ let game = (function () {
 					y: 0
 				},
 				size: options.size,
-				scale: 1
+				scale: 1,
+				targetScale: 1,
+				zoomStartScale: 1,
+				zoomIn: function zoomIn() {
+					this.zoomStartScale = this.scale;
+					this.zoomStartTime = new Date().getTime();
+
+					this.targetScale = this.targetScale * 1.2;
+				},
+				zoomOut: function zoomOut() {
+					this.zoomStartScale = this.scale;
+					this.zoomStartTime = new Date().getTime();
+
+					this.targetScale = this.targetScale / 1.2;
+				},
+				updateZoom() {
+					if (!this.zoomStartTime) {
+						return;
+					}
+					var zoomSpeed = 500;
+					var timeZooming = (new Date().getTime()) - this.zoomStartTime;
+					if (timeZooming > zoomSpeed) {
+						this.scale = this.targetScale;
+						this.zoomStartTime = undefined;
+						return;
+					}
+					var diff = (timeZooming / zoomSpeed) * (this.targetScale - this.zoomStartScale);
+					this.scale = this.zoomStartScale + diff;
+					console.log('this.scale', this.scale, 'diff:', diff);
+				}
 			};
 
 			let gameElement = document.querySelector(elementSelector);
@@ -156,8 +182,8 @@ let game = (function () {
 					y: e.clientY
 				};
 				var diff = {
-					dx: -(newPosition.x - dragLast.x),
-					dy: -(newPosition.y - dragLast.y)
+					dx: -(newPosition.x - dragLast.x) / viewport.scale,
+					dy: -(newPosition.y - dragLast.y) / viewport.scale
 				}
 				viewport.centre.x = viewport.centre.x + diff.dx;
 				viewport.centre.y = viewport.centre.y + diff.dy;
@@ -165,9 +191,29 @@ let game = (function () {
 				dragLast = newPosition;
 			}
 
+			function keydown(e) {
+				console.log(e.keyCode)
+				var operations = {
+					73: function zoomIn() {
+						console.log('zoom in');
+						viewport.zoomIn();
+					},
+					79: function zoomOut() {
+						console.log('zoom out');
+						viewport.zoomOut();
+					}
+				};
+
+				if (!operations[e.keyCode]) {
+					return;
+				}
+				operations[e.keyCode]();
+			}
+
 			canvasElement.addEventListener('mousedown', mouseDown);
 			canvasElement.addEventListener('mouseup', mouseUp);
 			canvasElement.addEventListener('mousemove', mouseMove);
+			document.body.addEventListener('keydown', keydown);
 
 			this.viewport = viewport;
 			this.startGameLoop();
@@ -182,6 +228,7 @@ let game = (function () {
 				let elapsedMs = time - lastTime;
 				lastTime = time;
 				this.fps = 1000 / elapsedMs;
+				game.viewport.updateZoom();
 				game.drawFrame();
 				requestAnimationFrame(doGameLoop);
 			}
@@ -192,9 +239,10 @@ let game = (function () {
 			let viewport = this.viewport;
 			context.save();
 
+			context.scale(viewport.scale, viewport.scale);
 			context.translate(-viewport.centre.x, -viewport.centre.y);
-			clear(viewport, context);
 
+			clear(viewport, context);
 			drawGrid(viewport, context);
 			this.drawPieces()
 			context.restore();
