@@ -74,11 +74,11 @@ function drawGrid(viewport, context) {
 	var width = viewport.size.width / viewport.scale;
 	var height = viewport.size.height / viewport.scale;
 	calculateDivisions(gridFrequency, viewport.centre.x - width / 2, viewport.centre.x + width / 2).forEach(function (position) {
-		drawVerticalGridLine(viewport, position, viewport.size.height, context);
+		drawVerticalGridLine(viewport, position, height, context);
 	});
 
 	calculateDivisions(gridFrequency, viewport.centre.y - height / 2, viewport.centre.y + height / 2).forEach(function (position) {
-		drawHorizontalGridLine(viewport, position, viewport.size.width, context);
+		drawHorizontalGridLine(viewport, position, width, context);
 	});
 
 	drawMarker({
@@ -94,8 +94,8 @@ function updateHud(viewport) {
 }
 
 function clear(viewport, context) {
-	var width = viewport.size.width;
-	var height = viewport.size.height;
+	var width = viewport.size.width / viewport.scale;
+	var height = viewport.size.height / viewport.scale;
 	context.clearRect(viewport.centre.x - width / 2, viewport.centre.y - height / 2, width, height);
 	context.fillStyle = '#000';
 	context.fillRect(viewport.centre.x - width / 2, viewport.centre.y - height / 2, width, height);
@@ -241,10 +241,11 @@ let game = (function () {
 
 			context.scale(viewport.scale, viewport.scale);
 			context.translate(-viewport.centre.x, -viewport.centre.y);
-
 			clear(viewport, context);
+
 			drawGrid(viewport, context);
 			this.drawPieces()
+
 			context.restore();
 			updateHud(viewport);
 		},
