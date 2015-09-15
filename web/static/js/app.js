@@ -33,6 +33,19 @@ function drawGrid(viewport, context) {
 		context.fill();
 	}
 
+	function determineFrequencies(scale, width) {
+		var freqs = [];
+		var f = 2;
+		do {
+			if ((width / (scale * f)) < 100) {
+				freqs.push(f);
+			}
+			f *= 2;
+		} while ((width / (scale * f)) > 2)
+		return freqs;
+		return [20, 40, 80, 160, 320, 640, 1280];
+	}
+
 	function calculateDivisions(frequency, min, max) {
 		var divisions = [];
 		var start = min - (min % frequency)
@@ -43,11 +56,11 @@ function drawGrid(viewport, context) {
 		return divisions;
 	}
 
-	function drawVerticalGridLine(viewport, position, height, context) {
+	function drawVerticalGridLine(viewport, position, height, style, context) {
 		context.save();
 
 		context.beginPath();
-		context.strokeStyle = '#0F0';
+		context.strokeStyle = style;
 		context.moveTo(position, viewport.centre.y - height / 2);
 		context.lineTo(position, viewport.centre.y + height / 2);
 		context.stroke();
@@ -55,11 +68,11 @@ function drawGrid(viewport, context) {
 		context.restore();
 	}
 
-	function drawHorizontalGridLine(viewport, position, width, context) {
+	function drawHorizontalGridLine(viewport, position, width, style, context) {
 		context.save();
 
 		context.beginPath();
-		context.strokeStyle = '#0F0';
+		context.strokeStyle = style;
 		context.moveTo(viewport.centre.x - width / 2, position);
 		context.lineTo(viewport.centre.x + width / 2, position);
 		context.stroke();
@@ -69,16 +82,22 @@ function drawGrid(viewport, context) {
 
 	context.save();
 
-	var gridFrequency = 20;
-
 	var width = viewport.size.width / viewport.scale;
 	var height = viewport.size.height / viewport.scale;
-	calculateDivisions(gridFrequency, viewport.centre.x - width / 2, viewport.centre.x + width / 2).forEach(function (position) {
-		drawVerticalGridLine(viewport, position, height, context);
-	});
 
-	calculateDivisions(gridFrequency, viewport.centre.y - height / 2, viewport.centre.y + height / 2).forEach(function (position) {
-		drawHorizontalGridLine(viewport, position, width, context);
+	determineFrequencies(viewport.scale, viewport.size.width).forEach(function (gridFrequency) {
+		var numberOfLines = width / gridFrequency;
+		var alpha = (100 - numberOfLines) / 100
+		var colour = 'rgba(' + [0, 256, 0, alpha].join(',') + ')';
+		console.log(colour);
+		context.lineWidth = 1 / viewport.scale;
+		calculateDivisions(gridFrequency, viewport.centre.x - width / 2, viewport.centre.x + width / 2).forEach(function (position) {
+			drawVerticalGridLine(viewport, position, height, colour, context);
+		});
+
+		calculateDivisions(gridFrequency, viewport.centre.y - height / 2, viewport.centre.y + height / 2).forEach(function (position) {
+			drawHorizontalGridLine(viewport, position, width, colour, context);
+		});
 	});
 
 	drawMarker({
