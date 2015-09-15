@@ -47,13 +47,12 @@ defmodule Fleetbattlex.Game do
 		others 
 			|> Enum.reject(is_self)
 			|> Enum.map(&Physics.calculate_gravitational_field(target, &1))
-			# |> Enum.map(fn {x,y} -> {-x,-y}end)
 			|> Physics.sum_vectors
 	end
 
 	defp initialise_positions(state)do
 		Logger.info "initialising positions for #{inspect state.ships}"
-		positions = state.ships |> Enum.map(fn ship -> Ship.current_position(ship) end)
+		positions = state.ships |> Enum.map(&Ship.current_position(&1))
 		Dict.put(state,:last_positions, positions)
 	end
 end

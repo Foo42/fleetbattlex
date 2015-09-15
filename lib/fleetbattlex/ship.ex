@@ -19,16 +19,12 @@ defmodule Fleetbattlex.Ship do
 		GenServer.call(ship, {:current_position})
 	end
 
-
 	def handle_call({:progress_for_time, time, forces}, _from, state = %{massive: massive}) do
 		updated_massive = Massive.progress_for_time(massive,time,forces)
-		summary = %{position: updated_massive.position, mass: updated_massive.mass}
-		{:reply, summary, %{state | massive: updated_massive}}
+		{:reply, Map.take(updated_massive,[:position, :mass]), %{state | massive: updated_massive}}
 	end
 
 	def handle_call({:current_position}, _from, state = %{massive: massive}) do
-		Logger.info "in current position"
-		current_position = %{position: massive.position, mass: massive.mass}
-		{:reply, current_position, state}
+		{:reply,  Map.take(massive,[:position, :mass]), state}
 	end
 end
