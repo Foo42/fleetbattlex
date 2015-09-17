@@ -4,16 +4,17 @@ defmodule Fleetbattlex.Game do
 	alias Fleetbattlex.Massive
 	alias Fleetbattlex.Physics
 	alias Fleetbattlex.Ship
+	alias Fleetbattlex.ShipSupervisor
 
 	def start_link() do
 		Logger.info "in game start_link"
-		GenServer.start_link(__MODULE__,%{pieces: [
-			%Massive{velocity: {0,8}, position: {50,0}},
-			%Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}
-		], ships: [
-			Ship.start_link(%Massive{velocity: {0,8}, position: {50,0}}),
-			Ship.start_link(%Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25})
-		] |> Enum.map(fn {:ok, pid} -> pid end)})
+		ships = [
+			{{"red team", "bob"}, %Massive{velocity: {0,8}, position: {50,0}}},
+			{{"blue team", "jane"}, %Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}}
+		]
+		ships |> Enum.each fn {name, params} -> ShipSupervisor.start_ship_linked(name,params) end
+		ship_names = ships |> Enum.map fn {name,_} -> name end
+		GenServer.start_link(__MODULE__,%{ships: ship_names})
 	end
 
 	def init(args) do

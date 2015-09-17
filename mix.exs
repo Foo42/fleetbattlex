@@ -17,7 +17,7 @@ defmodule Fleetbattlex.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [mod: {Fleetbattlex, []},
-     applications: [:phoenix, :phoenix_html, :cowboy, :logger]]
+     applications: [:phoenix, :phoenix_html, :cowboy, :logger, :gproc]]
   end
 
   # Specifies which paths to compile per environment
@@ -31,6 +31,7 @@ defmodule Fleetbattlex.Mixfile do
     [{:phoenix, "~> 0.17"},
      {:phoenix_html, "~> 2.1"},
      {:phoenix_live_reload, "~> 1.0", only: :dev},
-     {:cowboy, "~> 1.0"}]
+     {:cowboy, "~> 1.0"},
+     {:gproc, "~> 0.5.0"}]
   end
 end

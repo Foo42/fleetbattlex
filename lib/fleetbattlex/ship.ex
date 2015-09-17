@@ -3,8 +3,8 @@ defmodule Fleetbattlex.Ship do
 	require Logger
 	alias Fleetbattlex.Massive
 
-	def start_link(params = %Massive{}) do
-		GenServer.start_link(__MODULE__,%{massive: params})
+	def start_link(name, params) do
+		GenServer.start_link(__MODULE__,%{massive: params}, name: via_name(name))
 	end
 
 	def init(args) do
@@ -12,11 +12,11 @@ defmodule Fleetbattlex.Ship do
 	end
 
 	def progress_for_time(ship, time, forces \\ []) do
-		GenServer.call(ship,{:progress_for_time,time,forces})
+		GenServer.call(via_name(ship),{:progress_for_time,time,forces})
 	end
 
 	def current_position(ship) do
-		GenServer.call(ship, {:current_position})
+		GenServer.call(via_name(ship), {:current_position})
 	end
 
 	def handle_call({:progress_for_time, time, forces}, _from, state = %{massive: massive}) do
@@ -27,4 +27,6 @@ defmodule Fleetbattlex.Ship do
 	def handle_call({:current_position}, _from, state = %{massive: massive}) do
 		{:reply,  Map.take(massive,[:position, :mass]), state}
 	end
+
+	defp via_name(name), do: {:via, :gproc, {:n, :l, name}}
 end

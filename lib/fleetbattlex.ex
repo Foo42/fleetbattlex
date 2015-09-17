@@ -9,6 +9,7 @@ defmodule Fleetbattlex do
     children = [
       # Start the endpoint when the application starts
       supervisor(Fleetbattlex.Endpoint, []),
+      supervisor(Fleetbattlex.ShipSupervisor, []),
       worker(Fleetbattlex.Game, [])
       # Here you could define other workers and supervisors as children
       # worker(Fleetbattlex.Worker, [arg1, arg2, arg3]),
