@@ -19,6 +19,14 @@ defmodule Fleetbattlex.Router do
     get "/", PageController, :index
   end
 
+  scope "/", Fleetbattlex do
+    pipe_through :api 
+
+    resources "fleets", FleetController, only: [:index, :show] do
+      resources "ships", ShipController, only: [:index, :show]
+    end
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", Fleetbattlex do
   #   pipe_through :api
