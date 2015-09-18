@@ -9,8 +9,8 @@ defmodule Fleetbattlex.Game do
 	def start_link() do
 		Logger.info "in game start_link"
 		ships = [
-			{{"red team", "bob"}, %Massive{velocity: {0,8}, position: {50,0}}},
-			{{"blue team", "jane"}, %Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}}
+			{{"red", "defiance"}, %Massive{velocity: {0,8}, position: {50,0}}},
+			{{"blue", "jane"}, %Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}}
 		]
 		ships |> Enum.each fn {name, params} -> ShipSupervisor.start_ship_linked(name,params) end
 		ship_names = ships |> Enum.map fn {name,_} -> name end
