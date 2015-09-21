@@ -6,7 +6,7 @@ defmodule Fleetbattlex.Game do
 	alias Fleetbattlex.Ship
 	alias Fleetbattlex.ShipSupervisor
 
-	@speed 1
+	@speed 0.1
 
 	def start_link() do
 		Logger.info "in game start_link"

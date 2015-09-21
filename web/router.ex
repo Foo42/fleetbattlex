@@ -24,8 +24,9 @@ defmodule Fleetbattlex.Router do
 
     resources "fleets", FleetController, only: [:index, :show] do
       resources "ships", ShipController, only: [:index, :show] do
-        post "/manouvers/burns", ShipController, :post_burn
-        get "/manouvers/burns", ShipController, :list_burns
+        post "/engines/burn", ShipController, :post_burn
+        put "/engines/burn", ShipController, :post_burn
+        get "/engines/burn", ShipController, :get_burn
       end
     end
   end

@@ -12,19 +12,18 @@ defmodule Fleetbattlex.ShipController do
   	json conn, %{"fleet" => fleet_name, "ship" => ship_name, "position" => position_tuple_to_object(position)} 
   end
 
-  def list_burns(conn,%{"fleet_id" => fleet_name, "ship_id" => ship_name}) do
+  def get_burn(conn,%{"fleet_id" => fleet_name, "ship_id" => ship_name}) do
     ship = {fleet_name,ship_name}
-    burns = Ship.list_burns(ship)
-    [first | _ ] = burns
-  	json conn, burns 
+    burn = Ship.get_burn(ship)
+  	json conn, burn 
   end
 
   def post_burn(conn, params = %{"fleet_id" => fleet_name, "ship_id" => ship_name}) do
     ship = {fleet_name,ship_name}
     
-    defaults = %{"power" => 100.0}
+    defaults = %{"percentage" => 100.0}
     Logger.info "params: #{inspect params}"
-    burn = params |> Dict.take(["power","duration"]) |> as_floats(["power","duration"])
+    burn = params |> Dict.take(["percentage","thrust"]) |> as_floats(["percentage", "thrust"]) |> limit_value("percentage",100.0)
     
     Ship.start_burn(ship,Dict.merge(defaults, burn))
   	json conn, %{}
@@ -43,4 +42,12 @@ defmodule Fleetbattlex.ShipController do
       end
     end)
   end
+
+  defp limit_value(dict, key, max_value) do
+      if Dict.has_key?(dict,key) do
+        dict |> Dict.update!(key, &min(&1,max_value))
+      else
+        dict
+      end
+  end 
 end
