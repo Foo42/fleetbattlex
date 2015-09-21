@@ -23,7 +23,10 @@ defmodule Fleetbattlex.Router do
     pipe_through :api 
 
     resources "fleets", FleetController, only: [:index, :show] do
-      resources "ships", ShipController, only: [:index, :show]
+      resources "ships", ShipController, only: [:index, :show] do
+        post "/manouvers/burns", ShipController, :post_burn
+        get "/manouvers/burns", ShipController, :list_burns
+      end
     end
   end
 

@@ -6,6 +6,8 @@ defmodule Fleetbattlex.Game do
 	alias Fleetbattlex.Ship
 	alias Fleetbattlex.ShipSupervisor
 
+	@speed 1
+
 	def start_link() do
 		Logger.info "in game start_link"
 		ships = [
@@ -18,7 +20,7 @@ defmodule Fleetbattlex.Game do
 	end
 
 	def init(args) do
-		seconds = 0.1
+		seconds = @speed
 		:erlang.send_after(trunc(seconds * 1000), self(), :game_tick)
 		{:ok, initialise_positions(args)}
 	end
@@ -26,7 +28,7 @@ defmodule Fleetbattlex.Game do
 	def handle_info(:game_tick, state = %{ships: ships, last_positions: last_positions }) do
 		Logger.info "tick"
 
-		seconds = 0.1
+		seconds = @speed
 
 		gravity_for_each = last_positions |> Enum.map(&gravity_from_others(&1, last_positions))
 		Logger.info "gravity for each = #{inspect gravity_for_each}"

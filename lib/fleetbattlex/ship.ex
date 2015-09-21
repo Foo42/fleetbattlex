@@ -19,10 +19,25 @@ defmodule Fleetbattlex.Ship do
 		GenServer.call(via_name(ship), {:current_position})
 	end
 
+	def start_burn(ship, burn) do
+		GenServer.call(via_name(ship), {:start_burn, burn})
+	end
+
+	def list_burns(ship), do: GenServer.call(via_name(ship), {:list_burns})
+
 	def handle_call({:progress_for_time, time, forces}, _from, state = %{massive: massive}) do
 		updated_massive = Massive.progress_for_time(massive,time,forces)
 		{:reply, Map.take(updated_massive,[:position, :mass]), %{state | massive: updated_massive}}
 	end
+
+	def handle_call({:start_burn, burn}, _from, state) do
+		current_burns = state |> Dict.get(:burns,[])
+		new_burns = [burn|current_burns]
+		new_state = state |> Dict.put(:burns, new_burns)
+		{:reply, :ok, new_state}
+	end
+
+	def handle_call({:list_burns}, _from, state), do: {:reply, state.burns, state}
 
 	def handle_call({:current_position}, _from, state = %{massive: massive}) do
 		{:reply,  Map.take(massive,[:position, :mass]), state}
