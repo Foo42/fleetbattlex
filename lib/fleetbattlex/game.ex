@@ -11,11 +11,11 @@ defmodule Fleetbattlex.Game do
 	def start_link() do
 		Logger.info "in game start_link"
 		ships = [
-			{{"red", "defiance"}, %Massive{velocity: {0,8}, position: {50,0}}},
-			{{"blue", "jane"}, %Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}}
+			%{name: {"red", "defiance"}, massive: %Massive{velocity: {0,8}, position: {50,0}}},
+			%{name: {"blue", "jane"}, massive: %Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}}
 		]
-		ships |> Enum.each fn {name, params} -> ShipSupervisor.start_ship_linked(name,params) end
-		ship_names = ships |> Enum.map fn {name,_} -> name end
+		ships |> Enum.each(&ShipSupervisor.start_ship_linked(&1))
+		ship_names = ships |> Enum.map(&(&1.name))
 		GenServer.start_link(__MODULE__,%{ships: ship_names})
 	end
 

@@ -3,8 +3,10 @@ defmodule Fleetbattlex.Ship do
 	require Logger
 	alias Fleetbattlex.Massive
 
-	def start_link(name, params) do
-		GenServer.start_link(__MODULE__,%{massive: params, engine_max_thrust: 0.1, engine_burn: %{"percentage" => 0.0}}, name: via_name(name))
+	def start_link(params) do
+		ship_defaults = %{engine_max_thrust: 0.1, engine_burn: %{"percentage" => 0.0}}
+		ship_params = Dict.merge(ship_defaults, params)
+		GenServer.start_link(__MODULE__,ship_params, name: via_name(params.name))
 	end
 
 	def init(args) do
@@ -20,6 +22,7 @@ defmodule Fleetbattlex.Ship do
 	end
 
 	def start_burn(ship, burn) do
+
 		GenServer.call(via_name(ship), {:start_burn, burn})
 	end
 

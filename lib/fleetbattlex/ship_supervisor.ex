@@ -7,8 +7,8 @@ defmodule Fleetbattlex.ShipSupervisor do
 		Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
 	end
 
-	def start_ship_linked(name, massive) do
-		Supervisor.start_child(__MODULE__, [name, massive])
+	def start_ship_linked(params) do
+		Supervisor.start_child(__MODULE__, [params])
 	end
 
 	def init(_) do
