@@ -29,6 +29,19 @@ defmodule Fleetbattlex.ShipController do
   	json conn, %{}
   end
 
+  def get_bearing(conn, %{"fleet_id" => fleet_name, "ship_id" => ship_name}) do
+    ship = {fleet_name,ship_name}
+    json conn, position_tuple_to_object(Ship.get_bearing(ship))
+  end
+
+  def post_bearing(conn, params = %{"fleet_id" => fleet_name, "ship_id" => ship_name, "x" => x, "y" => y}) do
+    Logger.info "params: #{inspect params}"
+    ship = {fleet_name,ship_name}
+    bearing = {x,y}
+    Ship.set_bearing(ship,bearing)
+    json conn, %{}
+  end
+
   defp position_tuple_to_object {x,y} do
   	%{"x" => x, "y" => y}
   end

@@ -2,9 +2,10 @@ defmodule Fleetbattlex.Ship do
 	use GenServer
 	require Logger
 	alias Fleetbattlex.Massive
+	alias Fleetbattlex.Physics
 
 	def start_link(params) do
-		ship_defaults = %{engine_max_thrust: 0.1, engine_burn: %{"percentage" => 0.0}}
+		ship_defaults = %{engine_max_thrust: 0.1, engine_burn: %{"percentage" => 0.0}, bearing: {0,-1}}
 		ship_params = Dict.merge(ship_defaults, params)
 		GenServer.start_link(__MODULE__,ship_params, name: via_name(params.name))
 	end
@@ -22,17 +23,21 @@ defmodule Fleetbattlex.Ship do
 	end
 
 	def start_burn(ship, burn) do
-
 		GenServer.call(via_name(ship), {:start_burn, burn})
 	end
 
 	def get_burn(ship), do: GenServer.call(via_name(ship), {:get_burn})
 
-	def handle_call({:progress_for_time, time, external_forces}, _from, state) do
-		%{massive: massive, engine_max_thrust: engine_max_thrust, engine_burn: burn} = state;
-		forces = [calculate_thrust(engine_max_thrust, time, burn) | external_forces]
+	def set_bearing(ship, bearing), do: GenServer.call(via_name(ship), {:set_bearing, Fleetbattlex.Physics.normalise_vector(bearing)})
+	def get_bearing(ship), do: GenServer.call(via_name(ship), {:get_bearing})
+
+	def handle_call({:progress_for_time, time, external_forces}, _from, state = %{massive: massive}) do
+		forces = [calculate_thrust(state) | external_forces]
 		updated_massive = Massive.progress_for_time(massive,time,forces)
-		{:reply, Map.take(updated_massive,[:position, :mass]), %{state | massive: updated_massive}}
+		summary = updated_massive
+			|> Map.take([:position, :mass]) 
+			|> Map.merge(Map.take(state,[:bearing]))
+		{:reply, summary, %{state | massive: updated_massive}}
 	end
 
 	def handle_call({:start_burn, burn}, _from, state) do
@@ -46,8 +51,19 @@ defmodule Fleetbattlex.Ship do
 		{:reply,  Map.take(massive,[:position, :mass]), state}
 	end
 
+	def handle_call({:set_bearing, bearing}, _from, state) do
+		Logger.info "#{inspect state.name} adjusting bearing to #{inspect bearing}"
+		{:reply, :ok, %{state | bearing: bearing}}
+	end
+
+	def handle_call({:get_bearing}, _from, state = %{bearing: bearing}) do
+		{:reply, bearing, state}
+	end
+
 	defp via_name(name), do: {:via, :gproc, {:n, :l, name}}
 
-	defp calculate_thrust(_engine_max_thrust, time, %{"percentage" => 0.0}), do: {0,0}
-	defp calculate_thrust(engine_max_thrust, time, %{"percentage" => percentage}), do: {0, percentage * engine_max_thrust * time}
+	defp calculate_thrust(%{burn: %{"percentage" => 0.0}}), do: {0,0}
+	defp calculate_thrust(%{bearing: bearing, engine_max_thrust: engine_max_thrust, engine_burn: %{"percentage" => percentage}}) do
+		bearing |> Physics.scale_vector(engine_max_thrust * percentage)
+	end
 end

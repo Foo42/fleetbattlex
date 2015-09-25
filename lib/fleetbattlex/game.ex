@@ -37,8 +37,7 @@ defmodule Fleetbattlex.Game do
 		updated_posititions = ships_with_gravity |> Enum.map(fn {ship, gravity} -> Ship.progress_for_time(ship, seconds, [gravity]) end)
 		Logger.info "updated_posititions = #{inspect updated_posititions}"
 
-		position_update_message = updated_posititions |> Enum.map(fn %{position: {x,y}} -> %{position: %{x: x, y: y}} end)
-		Fleetbattlex.Endpoint.broadcast! "positions:updates", "update", %{positions: position_update_message}
+		push_position_updates_to_clients(updated_posititions)
 
 		:erlang.send_after(trunc(seconds * 1000), self(), :game_tick)
 		{:noreply, %{state | last_positions: updated_posititions}}
@@ -57,5 +56,11 @@ defmodule Fleetbattlex.Game do
 		Logger.info "initialising positions for #{inspect state.ships}"
 		positions = state.ships |> Enum.map(&Ship.current_position(&1))
 		Dict.put(state,:last_positions, positions)
+	end
+
+	defp push_position_updates_to_clients(updated_posititions) do
+		position_update_message = updated_posititions 
+			|> Enum.map(fn %{position: {x,y}, bearing: {bx,by}} -> %{position: %{x: x, y: y}, bearing: %{x: bx, y: by}} end)
+		Fleetbattlex.Endpoint.broadcast! "positions:updates", "update", %{positions: position_update_message}
 	end
 end

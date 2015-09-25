@@ -27,6 +27,9 @@ defmodule Fleetbattlex.Router do
         post "/engines/burn", ShipController, :post_burn
         put "/engines/burn", ShipController, :post_burn
         get "/engines/burn", ShipController, :get_burn
+        get "/bearing", ShipController, :get_bearing
+        put "/bearing", ShipController, :post_bearing 
+        post "/bearing", ShipController, :post_bearing 
       end
     end
   end

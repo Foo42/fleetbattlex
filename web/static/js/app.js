@@ -89,7 +89,6 @@ function drawGrid(viewport, context) {
 		var numberOfLines = width / gridFrequency;
 		var alpha = (100 - numberOfLines) / 100
 		var colour = 'rgba(' + [0, 256, 0, alpha].join(',') + ')';
-		console.log(colour);
 		context.lineWidth = 1 / viewport.scale;
 		calculateDivisions(gridFrequency, viewport.centre.x - width / 2, viewport.centre.x + width / 2).forEach(function (position) {
 			drawVerticalGridLine(viewport, position, height, colour, context);
@@ -118,6 +117,23 @@ function clear(viewport, context) {
 	context.clearRect(viewport.centre.x - width / 2, viewport.centre.y - height / 2, width, height);
 	context.fillStyle = '#000';
 	context.fillRect(viewport.centre.x - width / 2, viewport.centre.y - height / 2, width, height);
+}
+
+function calculateAngle(v) {
+	var a = Math.atan(Math.abs(v.x) / Math.abs(v.y));
+	if (v.x > 0) {
+		if (v.y > 0) {
+			return a;
+		} else {
+			return Math.PI - a;
+		}
+	} else {
+		if (v.y > 0) {
+			return -a;
+		} else {
+			return Math.PI + a;
+		}
+	}
 }
 
 let game = (function () {
@@ -165,14 +181,12 @@ let game = (function () {
 					}
 					var diff = (timeZooming / zoomSpeed) * (this.targetScale - this.zoomStartScale);
 					this.scale = this.zoomStartScale + diff;
-					console.log('this.scale', this.scale, 'diff:', diff);
 				}
 			};
 
 			let gameElement = document.querySelector(elementSelector);
 			var canvasElement = document.querySelector('canvas');
 
-			console.log('setting canvas to size', options.size);
 			canvasElement.height = options.size.height;
 			canvasElement.width = options.size.width;
 			var context = canvasElement.getContext('2d');
@@ -276,9 +290,21 @@ let game = (function () {
 				var size = 5;
 				self.context.translate(piece.position.x, piece.position.y);
 				self.context.beginPath();
-				self.context.arc(0, 0, size, 0, 2 * Math.PI, false);
-				self.context.fillStyle = piece.color || 'white';
+
+				self.context.save();
+				var angleWithXAxis = calculateAngle(piece.bearing);
+				console.log('angle =', angleWithXAxis / Math.PI, 'PI');
+				self.context.rotate(-angleWithXAxis);
+				self.context.strokeStyle = 'white';
+				self.context.moveTo(0, size / 2);
+				self.context.lineTo(size / 4, -size / 2);
+				self.context.lineTo(-size / 4, -size / 2);
+				self.context.lineTo(0, size / 2);
+				self.context.stroke();
+				self.context.fillStyle = 'white';
 				self.context.fill();
+				self.context.restore();
+
 				self.context.restore();
 			});
 		}

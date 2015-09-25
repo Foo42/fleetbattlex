@@ -11,6 +11,8 @@ defmodule Fleetbattlex.Physics do
 
 	def scale_vector({x,y}, scale), do: {x * scale, y * scale}
 
+	def normalise_vector(v), do: scale_vector(v, 1/vector_length(v))
+
 	def sum_vectors(vectors) when is_list(vectors) do
 		vectors |> Enum.reduce({0,0}, &sum_vectors/2)
 	end
