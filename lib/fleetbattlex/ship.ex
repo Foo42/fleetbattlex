@@ -36,7 +36,7 @@ defmodule Fleetbattlex.Ship do
 		updated_massive = Massive.progress_for_time(massive,time,forces)
 		summary = updated_massive
 			|> Map.take([:position, :mass]) 
-			|> Map.merge(Map.take(state,[:bearing]))
+			|> Map.merge(Map.take(state,[:bearing, :name, :engine_burn]))
 		{:reply, summary, %{state | massive: updated_massive}}
 	end
 

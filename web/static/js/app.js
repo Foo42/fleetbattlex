@@ -99,10 +99,11 @@ function drawGrid(viewport, context) {
 		});
 	});
 
+	context.scale(1 / viewport.scale, 1 / viewport.scale); //unscale
 	drawMarker({
 		x: 0,
 		y: 0
-	}, 10, 'red');
+	}, 5, 'red');
 
 	context.restore();
 }
@@ -287,7 +288,7 @@ let game = (function () {
 			var self = this;
 			this.pieces.forEach(function (piece) {
 				self.context.save();
-				var size = 5;
+				var size = 20;
 				self.context.translate(piece.position.x, piece.position.y);
 				self.context.beginPath();
 
@@ -300,10 +301,43 @@ let game = (function () {
 				self.context.lineTo(size / 4, -size / 2);
 				self.context.lineTo(-size / 4, -size / 2);
 				self.context.lineTo(0, size / 2);
+				self.context.closePath();
 				self.context.stroke();
 				self.context.fillStyle = 'white';
 				self.context.fill();
+
+				if (piece.engine_burn.percentage) {
+					self.context.save();
+					self.context.beginPath();
+					var alpha = piece.engine_burn.percentage * 255 / 100;
+					var colour = 'rgba(' + [255, 165, 0, alpha].join(',') + ')';
+					var flameSize = piece.engine_burn.percentage * size / 100;
+					self.context.strokeStyle = colour;
+					self.context.fillStyle = colour;
+					self.context.moveTo(0, (size / 2 - (size + flameSize)));
+					self.context.lineTo(-size / 8, -size / 2);
+					self.context.lineTo(size / 8, -size / 2);
+					self.context.fill();
+					self.context.closePath();
+					self.context.restore();
+				}
+
 				self.context.restore();
+
+				var showCallSigns = true;
+				if (showCallSigns) {
+					self.context.save();
+					self.context.scale(1 / self.viewport.scale, 1 / self.viewport.scale); //unscale
+					self.context.font = "20pt serif";
+					self.context.fillStyle = piece.name.fleet || 'white';
+					self.context.strokeStyle = piece.name.fleet || 'white';
+					self.context.beginPath();
+					self.context.moveTo(0, 0);
+					self.context.lineTo(10, -10);
+					self.context.stroke();
+					self.context.fillText(piece.name.ship, 10, -10);
+					self.context.restore();
+				}
 
 				self.context.restore();
 			});

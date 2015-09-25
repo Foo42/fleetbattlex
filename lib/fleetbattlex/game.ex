@@ -60,7 +60,18 @@ defmodule Fleetbattlex.Game do
 
 	defp push_position_updates_to_clients(updated_posititions) do
 		position_update_message = updated_posititions 
-			|> Enum.map(fn %{position: {x,y}, bearing: {bx,by}} -> %{position: %{x: x, y: y}, bearing: %{x: bx, y: by}} end)
+			|> Enum.map(&summary_to_ship_update/1)
 		Fleetbattlex.Endpoint.broadcast! "positions:updates", "update", %{positions: position_update_message}
+	end
+
+	defp summary_to_ship_update(summary) do
+		summary
+			|> Enum.map(fn
+				{:position, {x,y}} -> {:position, %{x: x, y: y}}
+				{:bearing, {x,y}} -> {:bearing, %{x: x, y: y}}
+				{:name, {fleet,ship}} -> {:name, %{fleet: fleet, ship: ship}}
+				other -> other
+			end)
+			|> Enum.into(%{})
 	end
 end
