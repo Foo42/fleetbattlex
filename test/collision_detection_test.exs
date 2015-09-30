@@ -15,4 +15,20 @@ defmodule Fleetbattlex.CollisionDetectionTests do
     
     assert Collision.detected?(a,b) == true
   end
+
+  test "vector overlayed with part of other vector collides" do
+    a = {{{0,0},{10,10}}, 1}
+    b = {{{2,2},{4,4}}, 1}
+    
+    assert Collision.detected?(a,b) == true
+  end
+
+  test "size of items increases their intersection" do
+    a = {{{0,0},{2,2}}, 1}
+    b = {{{5,0},{7,2}}, 1}
+    bLarge = {{{5,0},{7,2}}, 2}
+    
+    assert Collision.detected?(a,b) == false
+    assert Collision.detected?(a,bLarge) == true
+  end
 end
