@@ -17,6 +17,7 @@ defmodule Fleetbattlex.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+    get "/:fleet/:ship", ShipController, :index
   end
 
   scope "/", Fleetbattlex do

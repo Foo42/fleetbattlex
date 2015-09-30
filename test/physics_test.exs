@@ -22,9 +22,9 @@ defmodule Fleetbattlex.PhysicsTest do
 
   test "gravitational field" do
     a = %{mass: 1, position: {0,0}}
-    b = %{mass: 1, position: {0,3}}
+    b = %{mass: 1, position: {0,1}}
 
     gravitational_force = Physics.calculate_gravitational_field a, b
-    assert {0,0} = gravitational_force
+    assert {0.0,10.0} = gravitational_force
   end
 end

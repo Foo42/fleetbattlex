@@ -1,0 +1,6 @@
+<div id="game">
+  <canvas id="game-viewport"></canvas>
+  <div id="hud">
+  	<div id="viewport-debug"></div>
+  </div>
+</div>
