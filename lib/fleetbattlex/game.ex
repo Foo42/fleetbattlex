@@ -71,17 +71,9 @@ defmodule Fleetbattlex.Game do
 	end
 
 	defp detect_collisions(last_positions, updated_posititions) do
-
-		vectors = Enum.zip(last_positions,updated_posititions) |> Enum.map(fn {%{name: name, mass: size, position: start_position},%{position: end_position}} -> %{name: name, motion: {start_position, end_position}, size: size} end)
-		vectors |> Enum.map(fn 
-			vector -> 
-				is_self = fn %{name: other_name} -> other_name == vector.name end
-				vectors 
-					|> Enum.reject(is_self)
-					|> Enum.filter(&(CollisionDetection.detected?({&1.motion, &1.size}, {vector.motion, vector.size})))
-					|> Enum.map(&{&1.name, vector.name})
-
-		end ) |> List.flatten
+		Enum.zip(last_positions,updated_posititions) 
+			|> Enum.map(fn {%{name: name, mass: size, position: start_position},%{position: end_position}} -> %{name: name, start_position: start_position, end_position: end_position, size: size} end)
+			|> CollisionDetection.detect_all
 	end
 
 	defp summary_to_ship_update(summary) do
