@@ -5,6 +5,7 @@ defmodule Fleetbattlex.Game do
 	alias Fleetbattlex.Physics
 	alias Fleetbattlex.Ship
 	alias Fleetbattlex.ShipSupervisor
+	alias Fleetbattlex.CollisionDetection
 
 	@speed 0.1
 
@@ -31,11 +32,15 @@ defmodule Fleetbattlex.Game do
 		seconds = @speed
 
 		gravity_for_each = last_positions |> Enum.map(&gravity_from_others(&1, last_positions))
-		Logger.info "gravity for each = #{inspect gravity_for_each}"
 		ships_with_gravity = Enum.zip(ships,gravity_for_each)
 
 		updated_posititions = ships_with_gravity |> Enum.map(fn {ship, gravity} -> Ship.progress_for_time(ship, seconds, [gravity]) end)
-		Logger.info "updated_posititions = #{inspect updated_posititions}"
+
+		collisions = detect_collisions(last_positions, updated_posititions)
+		case collisions do
+			[] -> nil
+			_ -> Logger.info("Collisions! #{inspect collisions}")
+		end
 
 		push_position_updates_to_clients(updated_posititions)
 
@@ -54,7 +59,8 @@ defmodule Fleetbattlex.Game do
 
 	defp initialise_positions(state)do
 		Logger.info "initialising positions for #{inspect state.ships}"
-		positions = state.ships |> Enum.map(&Ship.current_position(&1))
+		positions = state.ships 
+			|> Enum.map(fn ship -> Ship.current_position(ship) |> Map.put(:name, ship) end)
 		Dict.put(state,:last_positions, positions)
 	end
 
@@ -62,6 +68,20 @@ defmodule Fleetbattlex.Game do
 		position_update_message = updated_posititions 
 			|> Enum.map(&summary_to_ship_update/1)
 		Fleetbattlex.Endpoint.broadcast! "positions:updates", "update", %{positions: position_update_message}
+	end
+
+	defp detect_collisions(last_positions, updated_posititions) do
+
+		vectors = Enum.zip(last_positions,updated_posititions) |> Enum.map(fn {%{name: name, mass: size, position: start_position},%{position: end_position}} -> %{name: name, motion: {start_position, end_position}, size: size} end)
+		vectors |> Enum.map(fn 
+			vector -> 
+				is_self = fn %{name: other_name} -> other_name == vector.name end
+				vectors 
+					|> Enum.reject(is_self)
+					|> Enum.filter(&(CollisionDetection.detected?({&1.motion, &1.size}, {vector.motion, vector.size})))
+					|> Enum.map(&{&1.name, vector.name})
+
+		end ) |> List.flatten
 	end
 
 	defp summary_to_ship_update(summary) do
