@@ -31,8 +31,6 @@ defmodule Fleetbattlex.Ship do
 	def set_bearing(ship, bearing), do: GenServer.call(via_name(ship), {:set_bearing, Fleetbattlex.Physics.normalise_vector(bearing)})
 	def get_bearing(ship), do: GenServer.call(via_name(ship), {:get_bearing})
 
-	def notify_of_collision(ship, other), do: GenServer.cast(via_name(ship),{:collided, other})
-
 	def handle_call({:progress_for_time, time, external_forces}, _from, state = %{massive: massive}) do
 		forces = [calculate_thrust(state) | external_forces]
 		updated_massive = Massive.progress_for_time(massive,time,forces)

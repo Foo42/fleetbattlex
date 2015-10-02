@@ -5,7 +5,7 @@ defmodule Fleetbattlex.Game do
 	alias Fleetbattlex.Physics
 	alias Fleetbattlex.Ship
 	alias Fleetbattlex.ShipSupervisor
-	alias Fleetbattlex.CollisionDetection
+	alias Fleetbattlex.Collisions
 
 	@speed 0.1
 
@@ -42,7 +42,7 @@ defmodule Fleetbattlex.Game do
 			_ -> Logger.info("Collisions! #{inspect collisions}")
 		end
 		collisions
-			|> Enum.each(fn {who, who_else} -> Ship.notify_of_collision(who, who_else) end)
+			|> Enum.each(fn {who, who_else} -> Collisions.notify_of_collision(who, who_else) end)
 
 		push_position_updates_to_clients(updated_posititions)
 
@@ -75,7 +75,7 @@ defmodule Fleetbattlex.Game do
 	defp detect_collisions(last_positions, updated_posititions) do
 		Enum.zip(last_positions,updated_posititions) 
 			|> Enum.map(fn {%{name: name, mass: size, position: start_position},%{position: end_position}} -> %{name: name, start_position: start_position, end_position: end_position, size: size} end)
-			|> CollisionDetection.detect_all
+			|> Collisions.detect_all
 	end
 
 	defp summary_to_ship_update(summary) do

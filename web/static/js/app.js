@@ -294,7 +294,6 @@ let game = (function () {
 
 				self.context.save();
 				var angleWithXAxis = calculateAngle(piece.bearing);
-				console.log('angle =', angleWithXAxis / Math.PI, 'PI');
 				self.context.rotate(-angleWithXAxis);
 				self.context.strokeStyle = 'white';
 				self.context.moveTo(0, size / 2);
