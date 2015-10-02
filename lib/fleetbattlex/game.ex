@@ -41,6 +41,8 @@ defmodule Fleetbattlex.Game do
 			[] -> nil
 			_ -> Logger.info("Collisions! #{inspect collisions}")
 		end
+		collisions
+			|> Enum.each(fn {who, who_else} -> Ship.notify_of_collision(who, who_else) end)
 
 		push_position_updates_to_clients(updated_posititions)
 

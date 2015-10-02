@@ -326,6 +326,7 @@ let game = (function () {
 
 				var showCallSigns = true;
 				if (showCallSigns) {
+					var callSign = piece.name.ship + (piece.dead ? ' (DEAD)' : '');
 					self.context.save();
 					self.context.scale(1 / self.viewport.scale, 1 / self.viewport.scale); //unscale
 					self.context.font = "20pt serif";
@@ -335,7 +336,7 @@ let game = (function () {
 					self.context.moveTo(0, 0);
 					self.context.lineTo(10, -10);
 					self.context.stroke();
-					self.context.fillText(piece.name.ship, 10, -10);
+					self.context.fillText(callSign, 10, -10);
 					self.context.restore();
 				}
 
