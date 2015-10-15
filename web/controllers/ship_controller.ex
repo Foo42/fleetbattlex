@@ -31,8 +31,10 @@ defmodule Fleetbattlex.ShipController do
 
   def fire_torpedo_tube(conn, params = %{"fleet_id" => fleet_name, "ship_id" => ship_name, "tube_number" => tube_number}) do
     ship = {fleet_name,ship_name}
-    Ship.fire_torpedo(ship,tube_number)
-  	json conn, %{}
+    case Ship.fire_torpedo(ship,tube_number) do
+      {:ok, {fleet, torpedo_id}} -> json conn, %{"url" => "/fleets/#{fleet_name}/ships/#{torpedo_id}/", "id" => torpedo_id}
+      {:error, error} -> json conn, %{"error" => error}
+    end
   end
 
   def get_bearing(conn, %{"fleet_id" => fleet_name, "ship_id" => ship_name}) do

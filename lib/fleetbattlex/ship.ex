@@ -64,13 +64,14 @@ defmodule Fleetbattlex.Ship do
 		{:reply, bearing, state}
 	end
 
+	def handle_call({:fire_torpedo,_}, _from, state = %{dead: true}), do: {:reply, {:error, :ship_dead}, state}
 	def handle_call({:fire_torpedo, tube_number}, _from, state = %{name: {fleet_name, ship_name}, bearing: bearing, massive: ship_massive}) do
 		torpedo_name = {fleet_name, tube_number}
 		torpedo_position = ship_massive.position |> Physics.sum_vectors(Physics.scale_vector(bearing,40))
 		torpedo_params = %{name: torpedo_name, bearing: bearing, massive: %{ship_massive | mass: 0.2, position: torpedo_position}}
 		Fleetbattlex.Torpedo.start_link(torpedo_params)
 		spawn_link fn -> Fleetbattlex.Game.add_piece(torpedo_name) end
-		{:reply, torpedo_name, state}
+		{:reply, {:ok, torpedo_name}, state}
 	end
 
 	def handle_cast({:collided, with_who}, state) do
