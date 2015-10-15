@@ -17,7 +17,7 @@ defmodule Fleetbattlex.Game do
 		]
 		ships |> Enum.each(&ShipSupervisor.start_ship_linked(&1))
 		ship_names = ships |> Enum.map(&(&1.name))
-		GenServer.start_link(__MODULE__,%{ships: ship_names})
+		GenServer.start_link(__MODULE__,%{ships: ship_names}, name: :game)
 	end
 
 	def init(args) do
@@ -26,15 +26,30 @@ defmodule Fleetbattlex.Game do
 		{:ok, initialise_positions(args)}
 	end
 
+	def add_piece(name) do
+		GenServer.call(:game, {:add_piece, name})
+	end
+
+	def handle_call({:add_piece, name}, _from, state = %{ships: ship_names, last_positions: last_positions}) do
+		Logger.info "Adding piece with name: #{inspect name}"
+		Logger.info "ships before: #{inspect ship_names}"
+		after_ships = [name | ship_names]
+		updated_posititions = last_positions |> Dict.put(name, Ship.current_position(name))
+		Logger.info "ships after: #{inspect after_ships}"
+		{:reply, :ok, %{state | ships: after_ships, last_positions: updated_posititions}}
+	end
+
 	def handle_info(:game_tick, state = %{ships: ships, last_positions: last_positions }) do
-		Logger.info "tick"
+		Logger.info "tick #{length(ships)}"
 
 		seconds = @speed
 
-		gravity_for_each = last_positions |> Enum.map(&gravity_from_others(&1, last_positions))
-		ships_with_gravity = Enum.zip(ships,gravity_for_each)
+		ships_with_gravity = last_positions |> Enum.map(fn {ship, position} -> {ship, gravity_from_others(ship, position, last_positions)} end)
 
-		updated_posititions = ships_with_gravity |> Enum.map(fn {ship, gravity} -> Ship.progress_for_time(ship, seconds, [gravity]) end)
+		updated_posititions = ships_with_gravity
+			|> Enum.into(%{}, fn {ship, gravity} ->
+				{ship, Ship.progress_for_time(ship, seconds, [gravity])}
+			end)
 
 		collisions = detect_collisions(last_positions, updated_posititions)
 		case collisions do
@@ -50,31 +65,41 @@ defmodule Fleetbattlex.Game do
 		{:noreply, %{state | last_positions: updated_posititions}}
 	end
 
-	defp gravity_from_others(target = %{position: position, mass: mass}, others) do
-		is_self = fn %{position: other_position} -> other_position == position end
+	defp gravity_from_others(self, target = %{position: position, mass: mass}, others) do
+		is_self = fn
+			{name, _} -> name == self
+		end
 
-		others 
+		others
 			|> Enum.reject(is_self)
+			|> Enum.map(fn {_ship, position} -> position end)
 			|> Enum.map(&Physics.calculate_gravitational_field(target, &1))
 			|> Physics.sum_vectors
 	end
 
 	defp initialise_positions(state)do
 		Logger.info "initialising positions for #{inspect state.ships}"
-		positions = state.ships 
-			|> Enum.map(fn ship -> Ship.current_position(ship) |> Map.put(:name, ship) end)
+		positions = state.ships
+			|> Enum.into(%{}, fn ship -> {ship, Ship.current_position(ship) |> Map.put(:name, ship)} end)
 		Dict.put(state,:last_positions, positions)
 	end
 
 	defp push_position_updates_to_clients(updated_posititions) do
-		position_update_message = updated_posititions 
+		position_update_message = updated_posititions
+			|> Dict.values
 			|> Enum.map(&summary_to_ship_update/1)
 		Fleetbattlex.Endpoint.broadcast! "positions:updates", "update", %{positions: position_update_message}
 	end
 
 	defp detect_collisions(last_positions, updated_posititions) do
-		Enum.zip(last_positions,updated_posititions) 
-			|> Enum.map(fn {%{name: name, mass: size, position: start_position},%{position: end_position}} -> %{name: name, start_position: start_position, end_position: end_position, size: size} end)
+		movements = last_positions
+			|> Enum.map(fn {ship, last_position} -> {last_position, Dict.get(updated_posititions , ship)} end)
+			|> Enum.filter(fn
+				{_,nil} -> false
+				_ -> true
+			end)
+		movements
+			|> Enum.map(fn {%{mass: size, position: start_position},%{name: name, position: end_position}} -> %{name: name, start_position: start_position, end_position: end_position, size: size} end)
 			|> Collisions.detect_all
 	end
 

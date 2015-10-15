@@ -356,4 +356,5 @@ chan.join().receive("ok", chan => {
 chan.on("update", msg => {
 	console.log(msg);
 	game.pieces = msg.positions;
+	console.log('number of pieces =',game.pieces.length);
 });

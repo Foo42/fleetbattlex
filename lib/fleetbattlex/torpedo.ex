@@ -1,39 +1,35 @@
-defmodule Fleetbattlex.Ship do
+defmodule Fleetbattlex.Torpedo do
 	use GenServer
 	require Logger
 	alias Fleetbattlex.Massive
 	alias Fleetbattlex.Physics
 
 	def start_link(params) do
-		ship_defaults = %{engine_max_thrust: 0.1, engine_burn: %{"percentage" => 0.0}, bearing: {0,-1}, dead: false}
-		ship_params = Dict.merge(ship_defaults, params)
-		GenServer.start_link(__MODULE__,ship_params, name: via_name(params.name))
+		torpedo_defaults = %{engine_max_thrust: 0.1, engine_burn: %{"percentage" => 50.0}, bearing: {0,-1}, dead: false}
+		torpedo_params = Dict.merge(torpedo_defaults, params)
+		GenServer.start_link(__MODULE__,torpedo_params, name: via_name(params.name))
 	end
 
 	def init(args) do
 		{:ok, args}
 	end
 
-	def progress_for_time(ship, time, forces \\ []) do
-		GenServer.call(via_name(ship),{:progress_for_time,time,forces})
+	def progress_for_time(name, time, forces \\ []) do
+		GenServer.call(via_name(name),{:progress_for_time,time,forces})
 	end
 
-	def current_position(ship) do
-		GenServer.call(via_name(ship), {:current_position})
+	def current_position(name) do
+		GenServer.call(via_name(name), {:current_position})
 	end
 
-	def start_burn(ship, burn) do
-		GenServer.call(via_name(ship), {:start_burn, burn})
+	def start_burn(name, burn) do
+		GenServer.call(via_name(name), {:start_burn, burn})
 	end
 
-	def get_burn(ship), do: GenServer.call(via_name(ship), {:get_burn})
+	def get_burn(name), do: GenServer.call(via_name(name), {:get_burn})
 
-	def set_bearing(ship, bearing), do: GenServer.call(via_name(ship), {:set_bearing, Fleetbattlex.Physics.normalise_vector(bearing)})
-	def get_bearing(ship), do: GenServer.call(via_name(ship), {:get_bearing})
-
-	def fire_torpedo(ship, tube_number), do: GenServer.call(via_name(ship), {:fire_torpedo, tube_number})
-
-	################################################################################################################
+	def set_bearing(name, bearing), do: GenServer.call(via_name(name), {:set_bearing, Fleetbattlex.Physics.normalise_vector(bearing)})
+	def get_bearing(name), do: GenServer.call(via_name(name), {:get_bearing})
 
 	def handle_call({:progress_for_time, time, external_forces}, _from, state = %{massive: massive}) do
 		forces = [calculate_thrust(state) | external_forces]
@@ -64,17 +60,9 @@ defmodule Fleetbattlex.Ship do
 		{:reply, bearing, state}
 	end
 
-	def handle_call({:fire_torpedo, tube_number}, _from, state = %{name: {fleet_name, ship_name}, bearing: bearing, massive: ship_massive}) do
-		torpedo_name = {fleet_name, tube_number}
-		torpedo_position = ship_massive.position |> Physics.sum_vectors(Physics.scale_vector(bearing,40))
-		torpedo_params = %{name: torpedo_name, massive: %{ship_massive | mass: 0.2, position: torpedo_position}}
-		Fleetbattlex.Torpedo.start_link(torpedo_params)
-		spawn_link fn -> Fleetbattlex.Game.add_piece(torpedo_name) end
-		{:reply, torpedo_name, state}
-	end
-
 	def handle_cast({:collided, with_who}, state) do
 		IO.puts "#{inspect state.name} collided with #{inspect with_who}"
+		explode()
 		new_state = state
 			|> Dict.put(:engine_burn, %{"percentage" => 0})
 			|> Dict.put(:engine_max_thrust, 0)
@@ -82,8 +70,9 @@ defmodule Fleetbattlex.Ship do
 		{:noreply, new_state}
 	end
 
-
 	defp via_name(name), do: {:via, :gproc, {:n, :l, name}}
+
+	defp explode(), do: Logger.info "Torpedo exploded"
 
 	defp calculate_thrust(%{burn: %{"percentage" => 0.0}}), do: {0,0}
 	defp calculate_thrust(%{bearing: bearing, engine_max_thrust: engine_max_thrust, engine_burn: %{"percentage" => percentage}}) do
