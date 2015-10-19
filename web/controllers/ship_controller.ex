@@ -37,6 +37,19 @@ defmodule Fleetbattlex.ShipController do
     end
   end
 
+  def list_torpedos(conn, %{"fleet_id" => fleet_name, "ship_id" => ship_name}) do
+    torpedos = {fleet_name,ship_name} |> Ship.list_torpedos
+    json conn, torpedos
+  end
+
+  def load_torpedo_tube(conn, %{"fleet_id" => fleet_name, "ship_id" => ship_name, "tube_number" => tube_number, "torpedo" => torpedo_id}) do
+    ship = {fleet_name,ship_name}
+    case Ship.load_torpedo_tube(ship, tube_number, torpedo_id) do
+      {:ok} -> json conn, %{}
+      _ -> json conn, %{"error": "either tube or torpedo unknown"}
+    end
+  end
+
   def get_bearing(conn, %{"fleet_id" => fleet_name, "ship_id" => ship_name}) do
     ship = {fleet_name,ship_name}
     json conn, position_tuple_to_object(Ship.get_bearing(ship))
