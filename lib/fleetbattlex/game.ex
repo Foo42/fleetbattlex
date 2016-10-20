@@ -12,8 +12,10 @@ defmodule Fleetbattlex.Game do
 	def start_link() do
 		Logger.info "in game start_link"
 		ships = [
-			%{name: {"red", "defiance"}, massive: %Massive{velocity: {0,8}, position: {50,0}}},
-			%{name: {"blue", "jane"}, massive: %Massive{velocity: {0.0, 0.0}, position: {100,0}, mass: 25}}
+			%{name: {"red", "dog"}, bearing: {0,1}, massive: %Massive{velocity: {0.0, 0.0}, position: {100.0, -1000.0}, mass: 25}},
+			%{name: {"red", "cat"}, bearing: {0,1}, massive: %Massive{velocity: {0.0, 0.0}, position: {-100.0, -1000.0}, mass: 25}},
+			%{name: {"blue", "go"}, massive: %Massive{velocity: {0.0, -0.0}, position: {100.0, 1000.0}, mass: 25}},
+			%{name: {"blue", "nad"}, massive: %Massive{velocity: {0.0, -0.0}, position: {-100.0, 1000.0}, mass: 25}}
 		]
 		ships |> Enum.each(&ShipSupervisor.start_ship_linked(&1))
 		ship_names = ships |> Enum.map(&(&1.name))
@@ -71,6 +73,7 @@ defmodule Fleetbattlex.Game do
 		end
 
 		others
+      |> Enum.filter(fn {name, ship} -> ship.mass >= 500 end)
 			|> Enum.reject(is_self)
 			|> Enum.map(fn {_ship, position} -> position end)
 			|> Enum.map(&Physics.calculate_gravitational_field(target, &1))

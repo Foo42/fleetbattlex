@@ -288,7 +288,7 @@ let game = (function () {
 			var self = this;
 			this.pieces.forEach(function (piece) {
 				self.context.save();
-				var size = 20;
+				var size = piece.mass;
 				self.context.translate(piece.position.x, piece.position.y);
 				self.context.beginPath();
 
